@@ -207,7 +207,7 @@ fn merge(original_contents: String, new_contents: String) -> String {
         .chain(new_header.lines().skip(1))
         .map(|line| {
             let (import, from) = line.split_once(" from ").unwrap();
-            let path = from.trim_start_matches('"').trim_end_matches(['"', ';']);
+            let path = from.trim_start_matches(['"', '\'']).trim_end_matches(['"', '\'', ';']);
 
             let types = import
                 .trim_start_matches("import type { ")
@@ -240,9 +240,9 @@ fn merge(original_contents: String, new_contents: String) -> String {
             }
         }
 
-        imports.push_str(" } from \"");
+        imports.push_str(" } from '");
         imports.push_str(path);
-        imports.push_str("\";\n");
+        imports.push_str("';\n");
     }
 
     let capacity = imports.len() + original_decls.len() + new_decl.len() + 2;
@@ -306,7 +306,6 @@ pub(crate) fn export_to_string<T: TS + ?Sized + 'static>(
     buffer.push_str(NOTE);
     generate_imports::<<T as crate::TS>::WithoutGenerics>(cfg, &mut buffer)?;
     generate_decl::<T>(cfg, &mut buffer);
-    buffer.push('\n');
     Ok(buffer)
 }
 
@@ -373,7 +372,7 @@ fn generate_imports<T: TS + ?Sized + 'static>(
             }
         }
 
-        writeln!(out, r#" }} from "{path}";"#)?;
+        writeln!(out, " }} from '{path}';")?;
     }
 
     writeln!(out)?;

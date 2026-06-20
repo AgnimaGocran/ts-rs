@@ -103,10 +103,10 @@ fn format_variant(
     if let Some(ref repr) = enum_attr.repr {
         let formatted = match (repr, &variant.discriminant) {
             (Repr::Int, Some((_, value))) => {
-                quote!(format!("\"{}\" = {}", #ts_name, #value))
+                quote!(format!("'{}' = {}", #ts_name, #value))
             }
-            (Repr::Int, None) => quote!(format!("\"{}\"", #ts_name)),
-            (Repr::Name, _) => quote!(format!("\"{}\" = \"{}\"", #ts_name, #ts_name)),
+            (Repr::Int, None) => quote!(format!("'{}'", #ts_name)),
+            (Repr::Name, _) => quote!(format!("'{}' = '{}'", #ts_name, #ts_name)),
         };
 
         formatted_variants.push(formatted);
@@ -141,7 +141,7 @@ fn format_variant(
     let formatted = match (untagged_variant, enum_attr.tagged()?) {
         (true, _) | (_, Tagged::Untagged) => quote!(#parsed_ty),
         (false, Tagged::Externally) => match &variant.fields {
-            Fields::Unit => quote!(format!("\"{}\"", #ts_name)),
+            Fields::Unit => quote!(format!("'{}'", #ts_name)),
             Fields::Unnamed(unnamed) if unnamed.unnamed.len() == 1 => {
                 let field = &unnamed.unnamed[0];
                 let field_attr = FieldAttr::from_attrs(&field.attrs)?;
@@ -149,12 +149,12 @@ fn format_variant(
                 field_attr.assert_validity(field)?;
 
                 if field_attr.skip {
-                    quote!(format!("\"{}\"", #ts_name))
+                    quote!(format!("'{}'", #ts_name))
                 } else {
-                    quote!(format!("{{ \"{}\": {} }}", #ts_name, #parsed_ty))
+                    quote!(format!("{{ {}: {} }}", #ts_name, #parsed_ty))
                 }
             }
-            _ => quote!(format!("{{ \"{}\": {} }}", #ts_name, #parsed_ty)),
+            _ => quote!(format!("{{ {}: {} }}", #ts_name, #parsed_ty)),
         },
         (false, Tagged::Adjacently { tag, content }) => match &variant.fields {
             Fields::Unnamed(unnamed) if unnamed.unnamed.len() == 1 => {
@@ -164,7 +164,7 @@ fn format_variant(
                 field_attr.assert_validity(field)?;
 
                 if field_attr.skip {
-                    quote!(format!("{{ \"{}\": \"{}\" }}", #tag, #ts_name))
+                    quote!(format!("{{ {}: '{}' }}", #tag, #ts_name))
                 } else {
                     let ty = match field_attr.type_override {
                         Some(type_override) => quote!(#type_override),
@@ -174,13 +174,13 @@ fn format_variant(
                         }
                     };
                     quote!(
-                        format!("{{ \"{}\": \"{}\", \"{}\": {} }}", #tag, #ts_name, #content, #ty)
+                        format!("{{ {}: '{}', {}: {} }}", #tag, #ts_name, #content, #ty)
                     )
                 }
             }
-            Fields::Unit => quote!(format!("{{ \"{}\": \"{}\" }}", #tag, #ts_name)),
+            Fields::Unit => quote!(format!("{{ {}: '{}' }}", #tag, #ts_name)),
             _ => quote!(
-                format!("{{ \"{}\": \"{}\", \"{}\": {} }}", #tag, #ts_name, #content, #parsed_ty)
+                format!("{{ {}: '{}', {}: {} }}", #tag, #ts_name, #content, #parsed_ty)
             ),
         },
         (false, Tagged::Internally { tag }) => match variant_type.inline_flattened {
@@ -195,7 +195,7 @@ fn format_variant(
                     field_attr.assert_validity(field)?;
 
                     if field_attr.skip {
-                        quote!(format!("{{ \"{}\": \"{}\" }}", #tag, #ts_name))
+                        quote!(format!("{{ {}: '{}' }}", #tag, #ts_name))
                     } else {
                         let ty = match field_attr.type_override {
                             Some(type_override) => quote! { #type_override },
@@ -205,12 +205,12 @@ fn format_variant(
                             }
                         };
 
-                        quote!(format!("{{ \"{}\": \"{}\" }} & {}", #tag, #ts_name, #ty))
+                        quote!(format!("{{ {}: '{}' }} & {}", #tag, #ts_name, #ty))
                     }
                 }
-                Fields::Unit => quote!(format!("{{ \"{}\": \"{}\" }}", #tag, #ts_name)),
+                Fields::Unit => quote!(format!("{{ {}: '{}' }}", #tag, #ts_name)),
                 _ => {
-                    quote!(format!("{{ \"{}\": \"{}\" }} & {}", #tag, #ts_name, #parsed_ty))
+                    quote!(format!("{{ {}: '{}' }} & {}", #tag, #ts_name, #parsed_ty))
                 }
             },
         },

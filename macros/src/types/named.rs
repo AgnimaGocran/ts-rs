@@ -19,7 +19,7 @@ pub(crate) fn named(attr: &StructAttr, ts_name: Expr, fields: &FieldsNamed) -> R
 
     if let Some(tag) = &attr.tag {
         formatted_fields.push(quote! {
-            format!("\"{}\": \"{}\",", #tag, #ts_name)
+            format!("{}: '{}',", #tag, #ts_name)
         });
     }
 
